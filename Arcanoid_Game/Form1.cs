@@ -30,16 +30,45 @@ namespace Arcanoid_Game
         public int ballY;
 
         public Image arcanoidSet;//пресеты
+        //счет
+        public Label scoreLabel;
+        public int score;
         public Form1()
         {
             InitializeComponent();
             timer1.Tick += new EventHandler(update);
+
+            scoreLabel = new Label();
+            scoreLabel.Location = new Point((mapWidth) * 20 + 1, 50);
+            scoreLabel.Text = "Score: " + score;
+            this.Controls.Add(scoreLabel);
 
             Init();
         }
         private void update(object sender, EventArgs e)
         {
             Invalidate();//перерисовка холста
+        }
+
+        //отрисовка веерхних платформ
+        public void GeneratePlatforms()
+        {
+            Random r = new Random();
+            for (int i = 0; i < mapHeight / 3; i++)
+            {
+                for (int j = 0; j < mapWidth; j += 2)
+                {
+                    int currPlatform = r.Next(1, 5);
+                    map[i, j] = currPlatform;
+                    map[i, j + 1] = currPlatform + currPlatform * 10;
+                }
+            }
+        }
+
+        //границы карты
+        public void DrawArea(Graphics g)
+        {
+            g.DrawRectangle(Pens.Black, new Rectangle(0, 0, mapWidth * 20, mapHeight * 20));
         }
 
         //инициализация элементов формы
@@ -50,6 +79,10 @@ namespace Arcanoid_Game
 
             arcanoidSet = new Bitmap("C:\\Users\\unico\\source\\repos\\ArcanoidGame\\ArcanoidGame\\Image\\arcanoid.png");
             timer1.Interval = 40;
+
+            //счет
+            score = 0;
+            scoreLabel.Text = "Score: " + score;
 
             //для начала заполняю  нулями
             for (int i = 0; i < mapHeight; i++)
@@ -76,6 +109,9 @@ namespace Arcanoid_Game
             //добавляю  шар на карту. Инициализирую как значение 8
             map[ballY, ballX] = 8;
 
+            //добавляю платформы
+            GeneratePlatforms();
+
             timer1.Start();
         }
 
@@ -94,11 +130,32 @@ namespace Arcanoid_Game
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(20, 20)), 806, 548, 73, 73, GraphicsUnit.Pixel);
                     }
+                    if (map[i, j] == 1)//платформа1
+                    {
+                        g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16, 170, 59, GraphicsUnit.Pixel);
+                    }
+                    if (map[i, j] == 2)//платформа2
+                    {
+                        g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
+                    }
+                    if (map[i, j] == 3)//платформа3
+                    {
+                        g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
+                    }
+                    if (map[i, j] == 4)//платформа4
+                    {
+                        g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
+                    }
+                    if (map[i, j] == 5)//платформа5
+                    {
+                        g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
+                    }
                 }
             }
         }
         private void OnPaint(object sender, PaintEventArgs e)
         {
+            DrawArea(e.Graphics);
             DrawMap(e.Graphics);
         }
     }
