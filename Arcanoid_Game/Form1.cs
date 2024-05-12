@@ -42,14 +42,33 @@ namespace Arcanoid_Game
             scoreLabel.Location = new Point((mapWidth) * 20 + 1, 50);
             scoreLabel.Text = "Score: " + score;
             this.Controls.Add(scoreLabel);
-
+            this.KeyUp += new KeyEventHandler(inputCheck);
             Init();
         }
         private void update(object sender, EventArgs e)
         {
             Invalidate();//перерисовка холста
         }
-
+        private void inputCheck(object sender, KeyEventArgs e)//полностью
+        {
+            map[platformY, platformX] = 0;
+            map[platformY, platformX + 1] = 0;
+            map[platformY, platformX + 2] = 0;
+            switch (e.KeyCode)
+            {
+                case Keys.Right:
+                    if (platformX + 1 < mapWidth - 1)
+                        platformX++;
+                    break;
+                case Keys.Left:
+                    if (platformX > 0)
+                        platformX--;
+                    break;
+            }
+            map[platformY, platformX] = 9;
+            map[platformY, platformX + 1] = 99;
+            map[platformY, platformX + 2] = 999;
+        }
         //отрисовка веерхних платформ
         public void GeneratePlatforms()
         {
