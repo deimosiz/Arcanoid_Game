@@ -45,8 +45,42 @@ namespace Arcanoid_Game
             this.KeyUp += new KeyEventHandler(inputCheck);
             Init();
         }
-        private void update(object sender, EventArgs e)
+        public void AddLine()
         {
+            for (int i = mapHeight - 2; i > 0; i--)
+            {
+                for (int j = 0; j < mapWidth; j += 2)
+                {
+                    map[i, j] = map[i - 1, j];
+                }
+            }
+            Random r = new Random();
+            for (int j = 0; j < mapWidth; j += 2)
+            {
+                int currPlatform = r.Next(1, 5);
+                map[0, j] = currPlatform;
+                map[0, j + 1] = currPlatform + currPlatform * 10;
+            }
+        }
+        private void update(object sender, EventArgs e) 
+        {
+            if (ballY + dirY > mapHeight - 1)
+            {
+                Init();
+            }
+
+
+            map[ballY, ballX] = 0;
+            if (!IsCollide())
+                ballX += dirX;
+            if (!IsCollide())
+                ballY += dirY;
+            map[ballY, ballX] = 8;
+
+            map[platformY, platformX] = 9;
+            map[platformY, platformX + 1] = 99;
+            map[platformY, platformX + 2] = 999;
+
             Invalidate();//перерисовка холста
         }
         private void inputCheck(object sender, KeyEventArgs e)//полностью
@@ -96,11 +130,11 @@ namespace Arcanoid_Game
             this.Width = (mapWidth + 5) * 20;
             this.Height = (mapHeight + 2) * 20;
 
-            arcanoidSet = new Bitmap("C:\\Users\\unico\\source\\repos\\ArcanoidGame\\ArcanoidGame\\Image\\arcanoid.png");
+            arcanoidSet = new Bitmap("C:\\arcanoid.png");
             timer1.Interval = 40;
 
-            //счет
             score = 0;
+
             scoreLabel.Text = "Score: " + score;
 
             //для начала заполняю  нулями
@@ -128,10 +162,85 @@ namespace Arcanoid_Game
             //добавляю  шар на карту. Инициализирую как значение 8
             map[ballY, ballX] = 8;
 
-            //добавляю платформы
+            dirX = 1; //добавить
+            dirY = -1;//добавить
+
             GeneratePlatforms();
 
             timer1.Start();
+        }
+
+        public bool IsCollide()
+        {
+            bool isColliding = false;
+            if (ballX + dirX > mapWidth - 1 || ballX + dirX < 0)
+            {
+                dirX *= -1;
+                isColliding = true;
+            }
+            if (ballY + dirY < 0)
+            {
+                dirY *= -1;
+                isColliding = true;
+            }
+
+            if (map[ballY + dirY, ballX] != 0)
+            {
+                bool addScore = false;
+                isColliding = true;
+
+                if (map[ballY + dirY, ballX] > 10 && map[ballY + dirY, ballX] < 99)
+                {
+                    map[ballY + dirY, ballX] = 0;
+                    map[ballY + dirY, ballX - 1] = 0;
+                    addScore = true;
+                }
+                else if (map[ballY + dirY, ballX] < 9)
+                {
+                    map[ballY + dirY, ballX] = 0;
+                    map[ballY + dirY, ballX + 1] = 0;
+                    addScore = true;
+                }
+                if (addScore)
+                {
+                    score += 50;
+                    if (score % 200 == 0 && score > 0)
+                    {
+                        AddLine();
+                    }
+                }
+                dirY *= -1;
+            }
+            if (map[ballY, ballX + dirX] != 0)
+            {
+                bool addScore = false;
+                isColliding = true;
+
+                if (map[ballY, ballX + dirX] > 10 && map[ballY + dirY, ballX] < 99)
+                {
+                    map[ballY, ballX + dirX] = 0;
+                    map[ballY, ballX + dirX - 1] = 0;
+                    addScore = true;
+                }
+                else if (map[ballY, ballX + dirX] < 9)
+                {
+                    map[ballY, ballX + dirX] = 0;
+                    map[ballY, ballX + dirX + 1] = 0;
+                    addScore = true;
+                }
+                if (addScore)
+                {
+                    score += 50;
+                    if (score % 200 == 0 && score > 0)
+                    {
+                        AddLine();
+                    }
+                }
+                dirX *= -1;
+            }
+            scoreLabel.Text = "Score: " + score;
+
+            return isColliding;
         }
 
         //отрисовка объектов
