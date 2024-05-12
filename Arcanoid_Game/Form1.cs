@@ -13,8 +13,8 @@ namespace Arcanoid_Game
     public partial class Form1 : Form
     {
         //размер формы
-        const int mapWidth = 20;
-        const int mapHeight = 30;
+        const int mapWidth = 30;
+        const int mapHeight = 40;
 
         public int[,] map = new int[mapHeight, mapWidth];//карта
 
@@ -32,7 +32,9 @@ namespace Arcanoid_Game
         public Image arcanoidSet;//пресеты
         //счет
         public Label scoreLabel;
+        public Label LevelLabel;
         public int score;
+        public int level = 1;
         public Form1()
         {
             InitializeComponent();
@@ -41,8 +43,12 @@ namespace Arcanoid_Game
             scoreLabel = new Label();
             scoreLabel.Location = new Point((mapWidth) * 20 + 1, 50);
             scoreLabel.Text = "Score: " + score;
+            LevelLabel = new Label();
+            LevelLabel.Location = new Point((mapWidth) * 20 + 1, 70);
+            LevelLabel.Text = "Level: " + level;
             this.Controls.Add(scoreLabel);
-            this.KeyUp += new KeyEventHandler(inputCheck);
+            this.Controls.Add(LevelLabel);
+            this.KeyDown += new KeyEventHandler(inputCheck);
             Init();
         }
         public void AddLine()
@@ -62,46 +68,77 @@ namespace Arcanoid_Game
                 map[0, j + 1] = currPlatform + currPlatform * 10;
             }
         }
-        private void update(object sender, EventArgs e) 
+        private void update(object sender, EventArgs e)
         {
             if (ballY + dirY > mapHeight - 1)
             {
                 Init();
             }
 
+            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth) // Проверяем границы перед обращением к ballY и ballX
+            {
+                map[ballY, ballX] = 0;
+            }
 
-            map[ballY, ballX] = 0;
             if (!IsCollide())
-                ballX += dirX;
+            {
+                if (ballX + dirX >= 0 && ballX + dirX < mapWidth) // Проверяем границы перед изменением ballX
+                {
+                    ballX += dirX;
+                }
+            }
+
             if (!IsCollide())
-                ballY += dirY;
-            map[ballY, ballX] = 8;
+            {
+                if (ballY + dirY >= 0 && ballY + dirY < mapHeight) // Проверяем границы перед изменением ballY
+                {
+                    ballY += dirY;
+                }
+            }
 
-            map[platformY, platformX] = 9;
-            map[platformY, platformX + 1] = 99;
-            map[platformY, platformX + 2] = 999;
+            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth) // Проверяем границы перед обращением к ballY и ballX
+            {
+                map[ballY, ballX] = 8;
+            }
 
-            Invalidate();//перерисовка холста
+            if (platformY >= 0 && platformY < mapHeight && platformX >= 0 && platformX < mapWidth) // Проверяем границы перед обращением к platformY и platformX
+            {
+                map[platformY, platformX] = 9;
+            }
+
+            if (platformY >= 0 && platformY < mapHeight && platformX + 1 >= 0 && platformX + 1 < mapWidth) // Проверяем границы перед обращением к platformY и platformX + 1
+            {
+                map[platformY, platformX + 1] = 99;
+            }
+
+            if (platformY >= 0 && platformY < mapHeight && platformX + 2 >= 0 && platformX + 2 < mapWidth) // Проверяем границы перед обращением к platformY и platformX + 2
+            {
+                map[platformY, platformX + 2] = 999;
+            }
+
+            Invalidate(); // Перерисовываем холст
         }
-        private void inputCheck(object sender, KeyEventArgs e)//полностью
+
+        private void inputCheck(object sender, KeyEventArgs e)
         {
             map[platformY, platformX] = 0;
-            map[platformY, platformX + 1] = 0;
-            map[platformY, platformX + 2] = 0;
-            switch (e.KeyCode)
+            if (e.KeyCode == Keys.Right && platformX + 2 < mapWidth) // Проверяем границы перед перемещением вправо
             {
-                case Keys.Right:
-                    if (platformX + 1 < mapWidth - 1)
-                        platformX++;
-                    break;
-                case Keys.Left:
-                    if (platformX > 0)
-                        platformX--;
-                    break;
+                platformX++;
+            }
+            else if (e.KeyCode == Keys.Left && platformX > 0) // Проверяем границы перед перемещением влево
+            {
+                platformX--;
             }
             map[platformY, platformX] = 9;
-            map[platformY, platformX + 1] = 99;
-            map[platformY, platformX + 2] = 999;
+            if (platformX + 1 < mapWidth) // Проверяем границы перед обновлением platformX + 1
+            {
+                map[platformY, platformX + 1] = 99;
+            }
+            if (platformX + 2 < mapWidth) // Проверяем границы перед обновлением platformX + 2
+            {
+                map[platformY, platformX + 2] = 999;
+            }
         }
         //отрисовка веерхних платформ
         public void GeneratePlatforms()
@@ -130,13 +167,13 @@ namespace Arcanoid_Game
             this.Width = (mapWidth + 5) * 20;
             this.Height = (mapHeight + 2) * 20;
 
-            arcanoidSet = new Bitmap("C:\\arcanoid.png");
-            timer1.Interval = 40;
+            arcanoidSet = new Bitmap("C:\\Users\\rr033\\source\\repos\\Arcanoid_Game\\Arcanoid_Game\\Image\\arcanoid.png");
+            timer1.Interval = 200;
 
             score = 0;
 
             scoreLabel.Text = "Score: " + score;
-
+            LevelLabel.Text = "Level: " + level;
             //для начала заполняю  нулями
             for (int i = 0; i < mapHeight; i++)
             {
@@ -206,6 +243,11 @@ namespace Arcanoid_Game
                     score += 50;
                     if (score % 200 == 0 && score > 0)
                     {
+                        if(timer1.Interval != 10) 
+                        { 
+                        timer1.Interval = timer1.Interval - 10;
+                            level++;
+                        }
                         AddLine();
                     }
                 }
@@ -233,13 +275,18 @@ namespace Arcanoid_Game
                     score += 50;
                     if (score % 200 == 0 && score > 0)
                     {
+                        if (timer1.Interval != 10)
+                        {
+                            timer1.Interval = timer1.Interval - 10;
+                            level++;
+                        }
                         AddLine();
                     }
                 }
                 dirX *= -1;
             }
             scoreLabel.Text = "Score: " + score;
-
+            LevelLabel.Text = "Level: " + level;
             return isColliding;
         }
 
