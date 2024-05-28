@@ -13,8 +13,8 @@ namespace Arcanoid_Game
     public partial class Form1 : Form
     {
         //размер формы
-        const int mapWidth = 30;
-        const int mapHeight = 40;
+        const int mapWidth = 20;
+        const int mapHeight = 30;
 
         public int[,] map = new int[mapHeight, mapWidth];//карта
 
@@ -32,9 +32,12 @@ namespace Arcanoid_Game
         public Image arcanoidSet;//пресеты
         //счет
         public Label scoreLabel;
-        public Label LevelLabel;
+        public Label levelLabel;
+        public Label livesLabel;
         public int score;
         public int level = 1;
+        public int lives = 3;
+
         public Form1()
         {
             InitializeComponent();
@@ -43,14 +46,23 @@ namespace Arcanoid_Game
             scoreLabel = new Label();
             scoreLabel.Location = new Point((mapWidth) * 20 + 1, 50);
             scoreLabel.Text = "Score: " + score;
-            LevelLabel = new Label();
-            LevelLabel.Location = new Point((mapWidth) * 20 + 1, 70);
-            LevelLabel.Text = "Level: " + level;
+
+            levelLabel = new Label();
+            levelLabel.Location = new Point((mapWidth) * 20 + 1, 70);
+            levelLabel.Text = "Level: " + level;
+
+            livesLabel = new Label();
+            livesLabel.Location = new Point((mapWidth) * 20 + 1, 90);
+            livesLabel.Text = "Lives: " + lives;
+
             this.Controls.Add(scoreLabel);
-            this.Controls.Add(LevelLabel);
-            this.KeyDown += new KeyEventHandler(inputCheck);
+            this.Controls.Add(levelLabel);
+            this.Controls.Add(livesLabel);
+
+            this.KeyUp += new KeyEventHandler(inputCheck);
             Init();
         }
+
         public void AddLine()
         {
             for (int i = mapHeight - 2; i > 0; i--)
@@ -68,21 +80,32 @@ namespace Arcanoid_Game
                 map[0, j + 1] = currPlatform + currPlatform * 10;
             }
         }
+
         private void update(object sender, EventArgs e)
         {
             if (ballY + dirY > mapHeight - 1)
             {
-                Init();
+                lives--;
+                if (lives == 0)
+                {
+                    timer1.Stop();
+                    MessageBox.Show("Game Over! Your final score is: " + score);
+                    Init();
+                }
+                else
+                {
+                    ResetBall();
+                }
             }
 
-            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth) // Проверяем границы перед обращением к ballY и ballX
+            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth)
             {
                 map[ballY, ballX] = 0;
             }
 
             if (!IsCollide())
             {
-                if (ballX + dirX >= 0 && ballX + dirX < mapWidth) // Проверяем границы перед изменением ballX
+                if (ballX + dirX >= 0 && ballX + dirX < mapWidth)
                 {
                     ballX += dirX;
                 }
@@ -90,28 +113,28 @@ namespace Arcanoid_Game
 
             if (!IsCollide())
             {
-                if (ballY + dirY >= 0 && ballY + dirY < mapHeight) // Проверяем границы перед изменением ballY
+                if (ballY + dirY >= 0 && ballY + dirY < mapHeight)
                 {
                     ballY += dirY;
                 }
             }
 
-            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth) // Проверяем границы перед обращением к ballY и ballX
+            if (ballY >= 0 && ballY < mapHeight && ballX >= 0 && ballX < mapWidth)
             {
                 map[ballY, ballX] = 8;
             }
 
-            if (platformY >= 0 && platformY < mapHeight && platformX >= 0 && platformX < mapWidth) // Проверяем границы перед обращением к platformY и platformX
+            if (platformY >= 0 && platformY < mapHeight && platformX >= 0 && platformX < mapWidth)
             {
                 map[platformY, platformX] = 9;
             }
 
-            if (platformY >= 0 && platformY < mapHeight && platformX + 1 >= 0 && platformX + 1 < mapWidth) // Проверяем границы перед обращением к platformY и platformX + 1
+            if (platformY >= 0 && platformY < mapHeight && platformX + 1 >= 0 && platformX + 1 < mapWidth)
             {
                 map[platformY, platformX + 1] = 99;
             }
 
-            if (platformY >= 0 && platformY < mapHeight && platformX + 2 >= 0 && platformX + 2 < mapWidth) // Проверяем границы перед обращением к platformY и platformX + 2
+            if (platformY >= 0 && platformY < mapHeight && platformX + 2 >= 0 && platformX + 2 < mapWidth)
             {
                 map[platformY, platformX + 2] = 999;
             }
@@ -122,25 +145,29 @@ namespace Arcanoid_Game
         private void inputCheck(object sender, KeyEventArgs e)
         {
             map[platformY, platformX] = 0;
-            if (e.KeyCode == Keys.Right && platformX + 2 < mapWidth) // Проверяем границы перед перемещением вправо
+            map[platformY, platformX + 1] = 0;
+            map[platformY, platformX + 2] = 0;
+
+            if (e.KeyCode == Keys.Right && platformX + 2 < mapWidth - 1)
             {
                 platformX++;
             }
-            else if (e.KeyCode == Keys.Left && platformX > 0) // Проверяем границы перед перемещением влево
+            else if (e.KeyCode == Keys.Left && platformX > 0)
             {
                 platformX--;
             }
+
             map[platformY, platformX] = 9;
-            if (platformX + 1 < mapWidth) // Проверяем границы перед обновлением platformX + 1
+            if (platformX + 1 < mapWidth)
             {
                 map[platformY, platformX + 1] = 99;
             }
-            if (platformX + 2 < mapWidth) // Проверяем границы перед обновлением platformX + 2
+            if (platformX + 2 < mapWidth)
             {
                 map[platformY, platformX + 2] = 999;
             }
         }
-        //отрисовка веерхних платформ
+
         public void GeneratePlatforms()
         {
             Random r = new Random();
@@ -155,13 +182,11 @@ namespace Arcanoid_Game
             }
         }
 
-        //границы карты
         public void DrawArea(Graphics g)
         {
             g.DrawRectangle(Pens.Black, new Rectangle(0, 0, mapWidth * 20, mapHeight * 20));
         }
 
-        //инициализация элементов формы
         public void Init()
         {
             this.Width = (mapWidth + 5) * 20;
@@ -171,10 +196,12 @@ namespace Arcanoid_Game
             timer1.Interval = 200;
 
             score = 0;
+            lives = 3;
 
             scoreLabel.Text = "Score: " + score;
-            LevelLabel.Text = "Level: " + level;
-            //для начала заполняю  нулями
+            levelLabel.Text = "Level: " + level;
+            livesLabel.Text = "Lives: " + lives;
+
             for (int i = 0; i < mapHeight; i++)
             {
                 for (int j = 0; j < mapWidth; j++)
@@ -183,93 +210,87 @@ namespace Arcanoid_Game
                 }
             }
 
-            //начальное положение платформы
             platformX = (mapWidth - 1) / 2;
             platformY = mapHeight - 1;
 
-            //добавляю платформу на карту(платформа занимает 3 ячейки). Инициализирую как значение 9, 99, 999
             map[platformY, platformX] = 9;
-            map[platformY, platformX + 1] = 99;//чтобы отрисовка не рисовала платформу дважды (часть платформы)
-            map[platformY, platformX + 2] = 999;//часть платформы
+            map[platformY, platformX + 1] = 99;
+            map[platformY, platformX + 2] = 999;
 
-            //инициализация шара, находящегося на платформе
             ballY = platformY - 1;
             ballX = platformX + 1;
 
-            //добавляю  шар на карту. Инициализирую как значение 8
             map[ballY, ballX] = 8;
 
-            dirX = 1; //добавить
-            dirY = -1;//добавить
+            dirX = 1;
+            dirY = -1;
 
             GeneratePlatforms();
 
             timer1.Start();
         }
 
+        private void ResetBall()
+        {
+            ballY = platformY - 1;
+            ballX = platformX + 1;
+            dirX = 1;
+            dirY = -1;
+            map[ballY, ballX] = 8;
+            livesLabel.Text = "Lives: " + lives;
+        }
+
         public bool IsCollide()
         {
             bool isColliding = false;
-            if (ballX + dirX > mapWidth - 1 || ballX + dirX < 0)
+
+            // Check for collision with the left and right boundaries
+            if (ballX + dirX >= mapWidth || ballX + dirX < 0)
             {
                 dirX *= -1;
                 isColliding = true;
             }
+
+            // Check for collision with the top boundary
             if (ballY + dirY < 0)
             {
                 dirY *= -1;
                 isColliding = true;
             }
 
-            if (map[ballY + dirY, ballX] != 0)
+            // Check for collision with the platform
+            if (ballY + dirY == platformY && (ballX + dirX >= platformX && ballX + dirX < platformX + 3))
             {
-                bool addScore = false;
-                isColliding = true;
-
-                if (map[ballY + dirY, ballX] > 10 && map[ballY + dirY, ballX] < 99)
-                {
-                    map[ballY + dirY, ballX] = 0;
-                    map[ballY + dirY, ballX - 1] = 0;
-                    addScore = true;
-                }
-                else if (map[ballY + dirY, ballX] < 9)
-                {
-                    map[ballY + dirY, ballX] = 0;
-                    map[ballY + dirY, ballX + 1] = 0;
-                    addScore = true;
-                }
-                if (addScore)
-                {
-                    score += 50;
-                    if (score % 200 == 0 && score > 0)
-                    {
-                        if(timer1.Interval != 10) 
-                        { 
-                        timer1.Interval = timer1.Interval - 10;
-                            level++;
-                        }
-                        AddLine();
-                    }
-                }
                 dirY *= -1;
+                isColliding = true;
             }
-            if (map[ballY, ballX + dirX] != 0)
+
+            // Check for collision with blocks in the vertical direction
+            if (!isColliding && ballY + dirY < mapHeight && ballY + dirY >= 0 && map[ballY + dirY, ballX] != 0)
             {
+                int nextY = ballY + dirY;
                 bool addScore = false;
                 isColliding = true;
 
-                if (map[ballY, ballX + dirX] > 10 && map[ballY + dirY, ballX] < 99)
+                if (map[nextY, ballX] > 10 && map[nextY, ballX] < 99)
                 {
-                    map[ballY, ballX + dirX] = 0;
-                    map[ballY, ballX + dirX - 1] = 0;
+                    map[nextY, ballX] = 0;
+                    if (ballX > 0)
+                    {
+                        map[nextY, ballX - 1] = 0;
+                    }
                     addScore = true;
                 }
-                else if (map[ballY, ballX + dirX] < 9)
+                else if (map[nextY, ballX] < 9)
                 {
-                    map[ballY, ballX + dirX] = 0;
-                    map[ballY, ballX + dirX + 1] = 0;
+                    map[nextY, ballX] = 0;
+                    if (ballX < mapWidth - 1)
+                    {
+                        map[nextY, ballX + 1] = 0;
+                    }
                     addScore = true;
                 }
+
                 if (addScore)
                 {
                     score += 50;
@@ -277,57 +298,110 @@ namespace Arcanoid_Game
                     {
                         if (timer1.Interval != 10)
                         {
-                            timer1.Interval = timer1.Interval - 10;
+                            timer1.Interval -= 10;
                             level++;
                         }
                         AddLine();
                     }
+                    if (score % 1000 == 0) // Gain a life every 1000 points
+                    {
+                        lives++;
+                        livesLabel.Text = "Lives: " + lives;
+                    }
+                }
+                dirY *= -1;
+            }
+
+            // Check for collision with blocks in the horizontal direction
+            if (!isColliding && ballX + dirX < mapWidth && ballX + dirX >= 0 && map[ballY, ballX + dirX] != 0)
+            {
+                int nextX = ballX + dirX;
+                bool addScore = false;
+                isColliding = true;
+
+                if (map[ballY, nextX] > 10 && map[ballY, nextX] < 99)
+                {
+                    map[ballY, nextX] = 0;
+                    if (ballY > 0)
+                    {
+                        map[ballY - 1, nextX] = 0;
+                    }
+                    addScore = true;
+                }
+                else if (map[ballY, nextX] < 9)
+                {
+                    map[ballY, nextX] = 0;
+                    if (ballY < mapHeight - 1)
+                    {
+                        map[ballY + 1, nextX] = 0;
+                    }
+                    addScore = true;
+                }
+
+                if (addScore)
+                {
+                    score += 50;
+                    if (score % 200 == 0 && score > 0)
+                    {
+                        if (timer1.Interval != 10)
+                        {
+                            timer1.Interval -= 10;
+                            level++;
+                        }
+                        AddLine();
+                    }
+                    if (score % 1000 == 0) // Gain a life every 1000 points
+                    {
+                        lives++;
+                        livesLabel.Text = "Lives: " + lives;
+                    }
                 }
                 dirX *= -1;
             }
+
             scoreLabel.Text = "Score: " + score;
-            LevelLabel.Text = "Level: " + level;
+            levelLabel.Text = "Level: " + level;
             return isColliding;
         }
 
-        //отрисовка объектов
         public void DrawMap(Graphics g)
         {
             for (int i = 0; i < mapHeight; i++)
             {
                 for (int j = 0; j < mapWidth; j++)
                 {
-                    if (map[i, j] == 9)//платформа
+                    if (map[i, j] == 9)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(60, 20)), 398, 17, 150, 50, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 8)//шар
+                    if (map[i, j] == 8)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(20, 20)), 806, 548, 73, 73, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 1)//платформа1
+                    if (map[i, j] == 1)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16, 170, 59, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 2)//платформа2
+                    if (map[i, j] == 2)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 3)//платформа3
+                    if (map[i, j] == 3)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 4)//платформа4
+                    if (map[i, j] == 4)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
                     }
-                    if (map[i, j] == 5)//платформа5
+                    if (map[i, j] == 5)
                     {
                         g.DrawImage(arcanoidSet, new Rectangle(new Point(j * 20, i * 20), new Size(40, 20)), 20, 16 + 77 * (map[i, j] - 1), 170, 59, GraphicsUnit.Pixel);
                     }
                 }
             }
         }
+
         private void OnPaint(object sender, PaintEventArgs e)
         {
             DrawArea(e.Graphics);
